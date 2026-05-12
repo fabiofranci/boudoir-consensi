@@ -119,7 +119,7 @@ class PdfPrimaSedutaService
 
                 $pdf->SetFont('helvetica', '', 9);
 
-                $pdf->SetXY(40, 66);
+                $pdf->SetXY(70, 66);
                 $pdf->MultiCell(
                     160,
                     20,
@@ -128,7 +128,7 @@ class PdfPrimaSedutaService
                     'L'
                 );
 
-                $pdf->SetXY(50, 76);
+                $pdf->SetXY(70, 76);
                 $pdf->MultiCell(
                     160,
                     20,

@@ -4,21 +4,54 @@ namespace App\Http\Controllers;
 
 use App\Models\Consenso;
 use Illuminate\Http\Request;
-use App\Services\PdfPrimaSedutaService;
+
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Storage;
+
+use App\Mail\ConsensoClienteMail;
 
 class ConsensoController extends Controller
 {
     public function form(string $tipo)
     {
-        // tipo: prima_seduta | completamento | preesistente | modella
         return view('consenso.form', compact('tipo'));
     }
 
     public function salva(Request $request)
     {
+        /*
+        |--------------------------------------------------------------------------
+        | VALIDAZIONE
+        |--------------------------------------------------------------------------
+        */
+
+        $request->validate([
+
+            'tipo' => 'required',
+
+            'nome' => 'required',
+            'cognome' => 'required',
+
+            'telefono' => 'required',
+
+            'firma_cliente' => 'required',
+
+        ]);
+
+        /*
+        |--------------------------------------------------------------------------
+        | PAYLOAD
+        |--------------------------------------------------------------------------
+        */
+
         $payload = $request->all();
 
-        // Normalizza checkbox (1/0)
+        /*
+        |--------------------------------------------------------------------------
+        | NORMALIZZA CHECKBOX
+        |--------------------------------------------------------------------------
+        */
+
         foreach ([
 
             'tspciglia',
@@ -38,15 +71,150 @@ class ConsensoController extends Controller
             'privacy_promo'
 
         ] as $k) {
+
             $payload[$k] = !empty($payload[$k]) ? 1 : 0;
         }
 
+        /*
+        |--------------------------------------------------------------------------
+        | CREA CONSENSO
+        |--------------------------------------------------------------------------
+        */
+
         $consenso = Consenso::create([
-            'tipo' => $request->input('tipo'),
+
+            'tipo' => str_replace('-', '_', $request->input('tipo')),
+
             'data' => $payload,
+
         ]);
 
-        return response()->json(['id' => $consenso->id]);
+        /*
+        |--------------------------------------------------------------------------
+        | GENERA PDF
+        |--------------------------------------------------------------------------
+        */
+
+        switch ($consenso->tipo) {
+
+            case 'prima_seduta':
+
+                $service = app(
+                    \App\Services\PdfPrimaSedutaService::class
+                );
+
+                break;
+
+            case 'completamento':
+
+                $service = app(
+                    \App\Services\PdfCompletamentoService::class
+                );
+
+                break;
+
+            default:
+
+                abort(404, 'Template PDF non trovato');
+        }
+
+        $pdfContent = $service->genera($consenso);
+
+        /*
+        |--------------------------------------------------------------------------
+        | SALVA PDF SU STORAGE
+        |--------------------------------------------------------------------------
+        */
+
+        $filename =
+            'consenso_'.$consenso->id.'.pdf';
+
+        $relativePath =
+            'pdf/'.$filename;
+
+        Storage::disk('local')->put(
+            $relativePath,
+            $pdfContent
+        );
+
+        /*
+        |--------------------------------------------------------------------------
+        | SALVA PATH DB
+        |--------------------------------------------------------------------------
+        */
+
+        $consenso->pdf_path = $relativePath;
+
+        $consenso->save();
+
+        /*
+        |--------------------------------------------------------------------------
+        | GOOGLE DRIVE
+        |--------------------------------------------------------------------------
+        */
+
+        try {
+
+            $google = app(
+                \App\Services\GoogleDriveService::class
+            );
+
+            $driveId = $google->upload(
+
+                storage_path('app/'.$relativePath),
+
+                $filename
+            );
+
+            $consenso->google_drive_id = $driveId;
+
+            $consenso->save();
+
+        } catch (\Exception $e) {
+
+            \Log::error(
+                'Errore Google Drive: '.$e->getMessage()
+            );
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | INVIO EMAIL CLIENTE
+        |--------------------------------------------------------------------------
+        */
+
+        try {
+
+            if (!empty($payload['email'])) {
+
+                Mail::to($payload['email'])
+                    ->send(
+                        new ConsensoClienteMail($consenso)
+                    );
+            }
+
+        } catch (\Exception $e) {
+
+            \Log::error(
+                'Errore invio mail: '.$e->getMessage()
+            );
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | RESPONSE
+        |--------------------------------------------------------------------------
+        */
+
+        return response()->json([
+
+            'success' => true,
+
+            'id' => $consenso->id,
+
+            'pdf_url' => '/consenso/pdf/'.$consenso->id
+
+        ]);
     }
 
     public function pdf(int $id)
@@ -56,10 +224,23 @@ class ConsensoController extends Controller
         switch ($consenso->tipo) {
 
             case 'prima_seduta':
-                $service = app(\App\Services\PdfPrimaSedutaService::class);
+
+                $service = app(
+                    \App\Services\PdfPrimaSedutaService::class
+                );
+
+                break;
+
+            case 'completamento':
+
+                $service = app(
+                    \App\Services\PdfCompletamentoService::class
+                );
+
                 break;
 
             default:
+
                 abort(404, 'Template PDF non trovato');
         }
 
