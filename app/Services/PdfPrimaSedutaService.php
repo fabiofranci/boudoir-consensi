@@ -139,6 +139,22 @@ class PdfPrimaSedutaService
 
                 /*
                 |--------------------------------------------------------------------------
+                | ISTRUZIONI POST-SEDUTA
+                |--------------------------------------------------------------------------
+                */
+
+                $this->drawCheck($pdf, 'post_non_bagnare', 25.5, 161.5, $data);
+
+                $this->drawCheck($pdf, 'post_non_trucco', 25.5, 167, $data);
+
+                $this->drawCheck($pdf, 'post_non_sole', 25.5, 172.5, $data);
+
+                $this->drawCheck($pdf, 'post_non_staccare_crosticine', 25.5, 178, $data);
+
+                $this->drawCheck($pdf, 'post_prodotto_lenitivo', 25.5, 183.5, $data);
+
+                /*
+                |--------------------------------------------------------------------------
                 | PRIVACY
                 |--------------------------------------------------------------------------
                 */

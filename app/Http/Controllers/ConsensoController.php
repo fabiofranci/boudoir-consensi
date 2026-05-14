@@ -38,6 +38,35 @@ class ConsensoController extends Controller
 
         ]);
 
+        if (in_array($request->input('tipo'), [
+            'preesistente',
+            'lavoro_preesistente',
+        ], true)) {
+
+            $request->validate([
+
+                'presa_atto_limite_toni' => 'accepted',
+                'presa_atto_piu_sedute' => 'accepted',
+                'presa_atto_neutralizzazione_tempi' => 'accepted',
+                'presa_atto_risultato_non_comparabile' => 'accepted',
+                'presa_atto_non_responsabilita' => 'accepted',
+
+            ]);
+        }
+
+        if ($request->input('tipo') === 'prima_seduta') {
+
+            $request->validate([
+
+                'post_non_bagnare' => 'accepted',
+                'post_non_trucco' => 'accepted',
+                'post_non_sole' => 'accepted',
+                'post_non_staccare_crosticine' => 'accepted',
+                'post_prodotto_lenitivo' => 'accepted',
+
+            ]);
+        }
+
         /*
         |--------------------------------------------------------------------------
         | PAYLOAD
@@ -58,6 +87,46 @@ class ConsensoController extends Controller
             'tsplabbra',
             'tspeyeliner',
 
+            'post_non_bagnare',
+            'post_non_trucco',
+            'post_non_sole',
+            'post_non_staccare_crosticine',
+            'post_prodotto_lenitivo',
+
+            'tecnica_microblading',
+            'tecnica_ago_shading',
+            'tecnica_mista',
+            'tecnica_non_nota',
+
+            'stato_sbiadito',
+            'stato_modificato_tono_direzione',
+            'stato_irregolare_forma',
+            'stato_pigmento_presente',
+            'stato_alterazione_cromatica',
+
+            'rimozione_nessuno',
+            'rimozione_laser',
+            'rimozione_soluzione_salina',
+            'rimozione_altro',
+
+            'obiettivo_rinfresco',
+            'obiettivo_ridisegno',
+            'obiettivo_copertura',
+            'obiettivo_neutralizzazione',
+            'obiettivo_completamento',
+            'obiettivo_altro',
+
+            'presa_atto_limite_toni',
+            'presa_atto_piu_sedute',
+            'presa_atto_neutralizzazione_tempi',
+            'presa_atto_risultato_non_comparabile',
+            'presa_atto_non_responsabilita',
+
+            'nessuna_terapia_anticoagulante',
+            'nessuna_terapia_isotretinoina',
+            'nessun_trattamento_laser_peeling',
+            'nessuna_allergia_pigmenti',
+
             'gravidanza_allattamento',
             'malattie_autoimmuni',
             'coagulopatie',
@@ -65,6 +134,11 @@ class ConsensoController extends Controller
             'allergie',
             'isotretinoina',
             'laser_peeling',
+
+            'assenza_terapie_farmacologiche',
+            'assenza_interventi_estetici_laser',
+            'assenza_reazioni_anomale',
+            'assenza_gravidanza_sopravvenuta',
 
             'privacy_dati',
             'privacy_foto',
@@ -83,7 +157,9 @@ class ConsensoController extends Controller
 
         $consenso = Consenso::create([
 
-            'tipo' => str_replace('-', '_', $request->input('tipo')),
+            'tipo' => $this->normalizeTipo(
+                $request->input('tipo')
+            ),
 
             'data' => $payload,
 
@@ -109,6 +185,16 @@ class ConsensoController extends Controller
 
                 $service = app(
                     \App\Services\PdfCompletamentoService::class
+                );
+
+                break;
+
+            case 'lavoro_preesistente':
+
+            case 'preesistente':
+
+                $service = app(
+                    \App\Services\PdfLavoroPreesistenteService::class
                 );
 
                 break;
@@ -239,6 +325,16 @@ class ConsensoController extends Controller
 
                 break;
 
+            case 'lavoro_preesistente':
+
+            case 'preesistente':
+
+                $service = app(
+                    \App\Services\PdfLavoroPreesistenteService::class
+                );
+
+                break;
+
             default:
 
                 abort(404, 'Template PDF non trovato');
@@ -248,5 +344,16 @@ class ConsensoController extends Controller
 
         return response($pdf)
             ->header('Content-Type', 'application/pdf');
+    }
+
+    private function normalizeTipo(string $tipo): string
+    {
+        $tipo = str_replace('-', '_', $tipo);
+
+        if ($tipo === 'preesistente') {
+            return 'lavoro_preesistente';
+        }
+
+        return $tipo;
     }
 }
