@@ -69,11 +69,23 @@
     }
 
     .step{
-        display:none;
+
+        display:block;
+
+        margin-bottom:34px;
+
+        padding-bottom:28px;
+
+        border-bottom:1px solid rgba(226, 207, 201, .9);
     }
 
-    .step.active{
-        display:block;
+    .step:nth-last-of-type(2){
+
+        margin-bottom:0;
+
+        padding-bottom:0;
+
+        border-bottom:none;
     }
 
     .form-control,
@@ -115,7 +127,16 @@
         accent-color:#c69b91;
     }
 
-    #sig{
+    input[type=checkbox].is-invalid{
+
+        outline:2px solid rgba(183, 120, 120, .45);
+
+        outline-offset:3px;
+
+        border-radius:4px;
+    }
+
+    .signature-canvas{
 
         border:2px dashed #d9b9b0;
 
@@ -128,13 +149,85 @@
         max-width:420px;
 
         height:180px;
+
+        display:block;
+    }
+
+    .signature-single{
+
+        display:flex;
+
+        flex-direction:column;
+
+        align-items:center;
+
+        gap:14px;
+    }
+
+    .signature-grid{
+
+        display:grid;
+
+        grid-template-columns:repeat(auto-fit, minmax(320px, 1fr));
+
+        gap:24px;
+    }
+
+    .signature-card{
+
+        background:rgba(255,255,255,.9);
+
+        border:1px solid #ecd8d2;
+
+        border-radius:24px;
+
+        padding:22px 20px;
+
+        display:flex;
+
+        flex-direction:column;
+
+        align-items:center;
+
+        gap:14px;
+
+        box-shadow:0 10px 30px rgba(130, 92, 84, .08);
+    }
+
+    .signature-title{
+
+        width:100%;
+
+        text-align:center;
+
+        font-size:18px;
+
+        font-weight:600;
+
+        color:#8f655d;
+
+        margin:0;
+    }
+
+    .signature-actions{
+
+        display:flex;
+
+        justify-content:center;
+
+        width:100%;
+    }
+
+    .signature-footer{
+
+        margin-top:24px;
     }
 
     .nav-btns{
 
         display:flex;
 
-        justify-content:space-between;
+        justify-content:flex-end;
 
         margin-top:30px;
     }
@@ -216,6 +309,7 @@
     $isPrimaSeduta = $tipo === 'prima_seduta';
     $isCompletamento = $tipo === 'completamento';
     $isPreesistente = in_array($tipo, ['preesistente', 'lavoro_preesistente'], true);
+    $isModella = $tipo === 'modella';
     $tipoValue = $isPreesistente ? 'lavoro_preesistente' : $tipo;
 @endphp
 
@@ -225,7 +319,7 @@
     @csrf
     <input type="hidden" name="tipo" value="{{ $tipoValue }}">
 
-<div class="step active">
+<div class="step">
     <h5>1. Dati del cliente</h5>
     @if ($isPrimaSeduta)
     <p class="static-copy">
@@ -241,6 +335,12 @@
         salute ed esito del lavoro gia eseguito.
     </p>
     @endif
+    @if ($isModella)
+    <p class="static-copy">
+        Questo modulo riguarda una sessione dimostrativa / formativa di
+        dermopigmentazione svolta in qualita di modella.
+    </p>
+    @endif
     @if ($isPreesistente)
     <p class="static-copy">
         Questo consenso riguarda un intervento su un lavoro di dermopigmentazione
@@ -251,6 +351,26 @@
     <input name="cognome" class="form-control mb-2" placeholder="Cognome" required>
     <input name="codice_fiscale" class="form-control mb-2" placeholder="Codice Fiscale" required>
     <input name="data_nascita" type="date" class="form-control mb-2" required>
+    @if ($isModella)
+    <input
+        name="luogo_nascita"
+        class="form-control mb-2"
+        placeholder="Luogo di nascita"
+        required
+    >
+    <input
+        name="nazionalita"
+        class="form-control mb-2"
+        placeholder="Nazionalita"
+        required
+    >
+    <input
+        name="indirizzo_residenza"
+        class="form-control mb-2"
+        placeholder="Indirizzo di residenza"
+        required
+    >
+    @endif
     <input name="telefono" class="form-control mb-2" placeholder="Telefono" required>
     <input name="email" type="email" class="form-control mb-2" placeholder="Email" required>
     @if ($isCompletamento)
@@ -273,7 +393,7 @@
     @endif
 </div>
 
-@if (! $isPreesistente)
+@if ($isPrimaSeduta || $isCompletamento)
 <div class="step">
     <h5>{{ $isCompletamento ? '2. Natura della seduta' : '2. Trattamento richiesto' }}</h5>
     @if ($isPrimaSeduta)
@@ -316,6 +436,41 @@
         {{ $isCompletamento ? 'Costo seduta di completamento' : 'Costo' }}
     </label>
     <input name="costo" class="form-control mb-2" placeholder="Costo €" required>
+</div>
+@endif
+
+@if ($isModella)
+<div class="step">
+    <h5>2. Trattamento concordato</h5>
+
+    <label>Zona trattata</label>
+    <input name="zona" class="form-control mb-2" required>
+
+    <label>Tecnica utilizzata</label>
+    <input name="tecnica" class="form-control mb-2" required>
+
+    <label>Data del trattamento</label>
+    <input
+        name="data_trattamento"
+        type="date"
+        class="form-control mb-2"
+        required
+    >
+
+    <label>Ora</label>
+    <input
+        name="ora_trattamento"
+        type="time"
+        class="form-control mb-2"
+        required
+    >
+
+    <label>Operatrice / Trainer</label>
+    <input
+        name="operatrice_trainer"
+        class="form-control"
+        required
+    >
 </div>
 @endif
 
@@ -495,6 +650,39 @@
     ></textarea>
     @endif
 
+    @if ($isModella)
+    <h5>3. Anamnesi e controindicazioni</h5>
+    <p class="static-copy">
+        La modella dichiara di NON presentare le seguenti condizioni.
+        Spuntare se presente:
+    </p>
+
+    <label><input type="checkbox" name="gravidanza_allattamento"> Gravidanza o allattamento</label><br>
+    <label><input type="checkbox" name="epilessia"> Epilessia</label><br>
+    <label><input type="checkbox" name="diabete_mellito"> Diabete mellito</label><br>
+    <label><input type="checkbox" name="psoriasi_eczema"> Psoriasi o eczema nella zona da trattare</label><br>
+    <label><input type="checkbox" name="disturbi_coagulazione"> Disturbi della coagulazione</label><br>
+    <label><input type="checkbox" name="terapia_anticoagulanti_roaccutan"> Terapia con anticoagulanti / Roaccutan</label><br>
+    <label><input type="checkbox" name="keloidosi_cicatrici_ipertrofiche"> Keloidosi o cicatrici ipertrofiche</label><br>
+    <label><input type="checkbox" name="herpes_ricorrente"> Herpes ricorrente (zona viso/labbra)</label><br>
+    <label><input type="checkbox" name="allergie_pigmenti_nichel_anestetici"> Allergie a pigmenti, nichel o anestetici</label><br>
+    <label><input type="checkbox" name="trattamenti_laser_recenti"> Trattamenti laser recenti (ultimi 30 gg)</label><br>
+    <label><input type="checkbox" name="malattie_autoimmuni"> Malattie autoimmuni</label><br>
+    <label><input type="checkbox" name="altre_patologie_presente"> Altre patologie</label>
+    <input
+        name="altre_patologie_testo"
+        class="form-control mb-3"
+        placeholder="Specificare altre patologie"
+    >
+
+    <label>Note mediche aggiuntive (facoltativo)</label>
+    <textarea
+        name="note_mediche_aggiuntive"
+        class="form-control"
+        rows="4"
+    ></textarea>
+    @endif
+
 </div>
 
 @if ($isCompletamento)
@@ -549,6 +737,52 @@
     <label><input type="checkbox" name="post_non_sole" required> Non esporre la zona al sole, solarium o saune</label><br>
     <label><input type="checkbox" name="post_non_staccare_crosticine" required> Non staccare le crosticine e lasciarle cadere naturalmente</label><br>
     <label><input type="checkbox" name="post_prodotto_lenitivo" required> Applicare il prodotto lenitivo consigliato secondo le modalita indicate</label>
+</div>
+@endif
+
+@if ($isModella)
+<div class="step">
+    <h5>4. Dichiarazione di consenso</h5>
+    <p class="static-copy">
+        La sottoscritta dichiara di essere stata adeguatamente informata
+        riguardo alla natura del trattamento di dermopigmentazione a cui si
+        sottopone volontariamente in qualita di modella dimostrativa,
+        nell'ambito di un corso di formazione professionale tenuto da
+        Boudoir 31.
+    </p>
+
+    <label><input type="checkbox" name="consenso_tecnica_materiali" required> Dichiaro di aver ricevuto informazioni chiare sulla tecnica, sui materiali utilizzati e sul processo di guarigione</label><br>
+    <label><input type="checkbox" name="consenso_risultato_guarigione" required> Dichiaro di essere consapevole che il risultato definitivo si valuta solo dopo la completa guarigione e il ritocco</label><br>
+    <label><input type="checkbox" name="consenso_no_aspettative_garantite" required> Dichiaro di non avere aspettative estetiche garantite, in quanto il trattamento e effettuato in contesto formativo</label><br>
+    <label><input type="checkbox" name="consenso_aftercare" required> Dichiaro di essere stata informata sulle norme di aftercare e di impegnarsi a seguirle</label>
+</div>
+
+<div class="step">
+    <h5>5. Documentazione visiva e uso dei contenuti</h5>
+    <p class="static-copy">
+        La partecipazione al programma modelle di Boudoir 31 prevede, quale
+        condizione essenziale e parte integrante dell'accordo, la realizzazione
+        di documentazione fotografica e video del trattamento nelle fasi
+        precedente, durante e successiva all'esecuzione.
+    </p>
+    <p class="static-copy">
+        Tale condizione e accettata dalla modella in ragione della riduzione o
+        azzeramento del costo del trattamento rispetto al prezzo di listino.
+    </p>
+    <p class="static-copy">
+        La sottoscritta accetta e autorizza espressamente Boudoir 31 a
+        utilizzare il materiale visivo prodotto per:
+    </p>
+
+    <label><input type="checkbox" name="autorizza_social" required> pubblicazione sui canali social media di Boudoir 31 (Instagram, Facebook, TikTok e affini)</label><br>
+    <label><input type="checkbox" name="autorizza_materiali_promozionali" required> utilizzo in materiali promozionali, pubblicitari e di portfolio professionale</label><br>
+    <label><input type="checkbox" name="autorizza_didattico" required> impiego a scopo didattico e formativo nei corsi tenuti da Boudoir 31 e da Anna Carolina</label>
+
+    <p class="static-copy mt-3">
+        Il materiale potra essere pubblicato senza limitazioni di tempo e senza
+        ulteriore richiesta di approvazione. Non e previsto alcun compenso
+        economico aggiuntivo per l'utilizzo dei contenuti.
+    </p>
 </div>
 @endif
 
@@ -666,7 +900,7 @@
 </div>
 @endif
 
-@if (! $isPreesistente)
+@if ($isPrimaSeduta || $isCompletamento)
 <div class="step">
     @if ($isPrimaSeduta)
     <h5>7. Privacy e trattamento dei dati</h5>
@@ -713,7 +947,7 @@
         {{
             $isPreesistente
                 ? '8. Dichiarazione e firma'
-                : ($isCompletamento ? '6. Dichiarazione e firma' : '8. Dichiarazione e firma')
+                : ($isModella ? '6. Firme' : ($isCompletamento ? '6. Dichiarazione e firma' : '8. Dichiarazione e firma'))
         }}
     </h5>
     @if ($isPrimaSeduta)
@@ -738,93 +972,147 @@
         trattamento secondo quanto concordato.
     </p>
     @endif
-    <canvas id="sig" width="420" height="180"></canvas><br>
-    <button type="button" id="clear" class="btn btn-warning mt-2">Cancella</button>
-    <input type="hidden" name="firma_cliente" id="firma_cliente">
+    @if ($isModella)
+    <div class="signature-grid">
+        <div class="signature-card">
+            <p class="signature-title">Firma della Modella</p>
+            <canvas
+                id="sig"
+                class="signature-canvas"
+                width="420"
+                height="180"
+            ></canvas>
+            <div class="signature-actions">
+                <button type="button" id="clear" class="btn btn-warning">
+                    Cancella firma modella
+                </button>
+            </div>
+            <input type="hidden" name="firma_cliente" id="firma_cliente">
+        </div>
+
+        <div class="signature-card">
+            <p class="signature-title">Firma dell'Operatrice / Trainer</p>
+            <canvas
+                id="sig_operatrice"
+                class="signature-canvas"
+                width="420"
+                height="180"
+            ></canvas>
+            <div class="signature-actions">
+                <button type="button" id="clear_operatrice" class="btn btn-warning">
+                    Cancella firma operatrice
+                </button>
+            </div>
+            <input type="hidden" name="firma_operatrice" id="firma_operatrice">
+        </div>
+    </div>
+
+    <p class="static-copy signature-footer">
+        Boudoir 31 · Lucca (LU) · Responsabile del trattamento dati:
+        Anna Carolina · Dati trattati ai sensi del Reg. UE 2016/679 (GDPR)
+        esclusivamente per finalita legate al trattamento effettuato.
+    </p>
+    @else
+    <div class="signature-single">
+        <canvas
+            id="sig"
+            class="signature-canvas"
+            width="420"
+            height="180"
+        ></canvas>
+        <div class="signature-actions">
+            <button type="button" id="clear" class="btn btn-warning">
+                Cancella
+            </button>
+        </div>
+        <input type="hidden" name="firma_cliente" id="firma_cliente">
+    </div>
+    @endif
 </div>
 
 <div class="nav-btns">
-    <button type="button" id="prev" class="btn btn-secondary">Indietro</button>
-    <button type="button" id="next" class="btn btn-primary">Avanti</button>
-    <button type="submit" id="save" class="btn btn-success" style="display:none">Salva</button>
+    <button type="submit" id="save" class="btn btn-success">Salva</button>
 </div>
 
 </form>
 
 <script>
-let i=0, steps=$('.step');
-
 $.ajaxSetup({
     headers: {
         'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
     }
 });
 
-function show(){
-    steps.removeClass('active').eq(i).addClass('active');
-    if(i > 0){
-        $('#prev').css('visibility', 'visible');
-    }else{
-        $('#prev').css('visibility', 'hidden');
-    }
-    $('#next').toggle(i<steps.length-1);
-    $('#save').toggle(i===steps.length-1);
-}
-$('#next').click(function(){
-
+function validateRequiredFields() {
     let valid = true;
+    let firstInvalid = null;
 
-    steps.eq(i)
+    $('#f')
         .find('[required]')
         .each(function(){
 
-            if($(this).is(':checkbox')){
+            const $field = $(this);
+            const isCheckbox = $field.is(':checkbox');
+            const fieldValid = isCheckbox
+                ? $field.is(':checked')
+                : !!$field.val();
 
-                if(!$(this).is(':checked')){
+            $field.toggleClass('is-invalid', !fieldValid);
 
-                    $(this).addClass('is-invalid');
-
-                    valid = false;
-
-                }else{
-
-                    $(this).removeClass('is-invalid');
-                }
-
-                return;
-            }
-
-            if(!$(this).val()){
-
-                $(this).addClass('is-invalid');
-
+            if (!fieldValid) {
                 valid = false;
 
-            }else{
-
-                $(this).removeClass('is-invalid');
+                if (!firstInvalid) {
+                    firstInvalid = this;
+                }
             }
         });
 
-    if(!valid){
-        return;
+    if (!valid && firstInvalid) {
+        firstInvalid.scrollIntoView({
+            behavior: 'smooth',
+            block: 'center'
+        });
+
+        if (typeof firstInvalid.focus === 'function') {
+            firstInvalid.focus();
+        }
     }
 
-    i++;
+    return valid;
+}
 
-    show();
+$('#f').on('input change', '[required]', function(){
+    const $field = $(this);
+    const isCheckbox = $field.is(':checkbox');
+    const fieldValid = isCheckbox
+        ? $field.is(':checked')
+        : !!$field.val();
+
+    $field.toggleClass('is-invalid', !fieldValid);
 });
-$('#prev').click(()=>{i--;show()});
-show();
 
 // signature
 const pad = new SignaturePad(document.getElementById('sig'));
+const operatriceCanvas = document.getElementById('sig_operatrice');
+const padOperatrice = operatriceCanvas
+    ? new SignaturePad(operatriceCanvas)
+    : null;
+
 $('#clear').click(()=>pad.clear());
+
+if (padOperatrice) {
+    $('#clear_operatrice').click(()=>padOperatrice.clear());
+}
 
 // submit
 $('#f').on('submit', function(e){
 
     e.preventDefault();
+
+    if (!validateRequiredFields()) {
+        return;
+    }
 
     // firma obbligatoria
 
@@ -838,6 +1126,19 @@ $('#f').on('submit', function(e){
     $('#firma_cliente').val(
         pad.toDataURL()
     );
+
+    if (padOperatrice && padOperatrice.isEmpty()) {
+
+        alert("Inserire la firma dell'operatrice / trainer");
+
+        return;
+    }
+
+    if (padOperatrice) {
+        $('#firma_operatrice').val(
+            padOperatrice.toDataURL()
+        );
+    }
 
     let data = {};
 
@@ -861,6 +1162,23 @@ $('#f').on('submit', function(e){
         'tspciglia',
         'tsplabbra',
         'tspeyeliner',
+        'epilessia',
+        'diabete_mellito',
+        'psoriasi_eczema',
+        'disturbi_coagulazione',
+        'terapia_anticoagulanti_roaccutan',
+        'keloidosi_cicatrici_ipertrofiche',
+        'herpes_ricorrente',
+        'allergie_pigmenti_nichel_anestetici',
+        'trattamenti_laser_recenti',
+        'altre_patologie_presente',
+        'consenso_tecnica_materiali',
+        'consenso_risultato_guarigione',
+        'consenso_no_aspettative_garantite',
+        'consenso_aftercare',
+        'autorizza_social',
+        'autorizza_materiali_promozionali',
+        'autorizza_didattico',
         'post_non_bagnare',
         'post_non_trucco',
         'post_non_sole',

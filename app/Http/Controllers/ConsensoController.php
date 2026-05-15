@@ -67,6 +67,32 @@ class ConsensoController extends Controller
             ]);
         }
 
+        if ($request->input('tipo') === 'modella') {
+
+            $request->validate([
+
+                'luogo_nascita' => 'required',
+                'nazionalita' => 'required',
+                'indirizzo_residenza' => 'required',
+                'zona' => 'required',
+                'tecnica' => 'required',
+                'data_trattamento' => 'required',
+                'ora_trattamento' => 'required',
+                'operatrice_trainer' => 'required',
+                'firma_operatrice' => 'required',
+
+                'consenso_tecnica_materiali' => 'accepted',
+                'consenso_risultato_guarigione' => 'accepted',
+                'consenso_no_aspettative_garantite' => 'accepted',
+                'consenso_aftercare' => 'accepted',
+
+                'autorizza_social' => 'accepted',
+                'autorizza_materiali_promozionali' => 'accepted',
+                'autorizza_didattico' => 'accepted',
+
+            ]);
+        }
+
         /*
         |--------------------------------------------------------------------------
         | PAYLOAD
@@ -86,6 +112,26 @@ class ConsensoController extends Controller
             'tspciglia',
             'tsplabbra',
             'tspeyeliner',
+
+            'epilessia',
+            'diabete_mellito',
+            'psoriasi_eczema',
+            'disturbi_coagulazione',
+            'terapia_anticoagulanti_roaccutan',
+            'keloidosi_cicatrici_ipertrofiche',
+            'herpes_ricorrente',
+            'allergie_pigmenti_nichel_anestetici',
+            'trattamenti_laser_recenti',
+            'altre_patologie_presente',
+
+            'consenso_tecnica_materiali',
+            'consenso_risultato_guarigione',
+            'consenso_no_aspettative_garantite',
+            'consenso_aftercare',
+
+            'autorizza_social',
+            'autorizza_materiali_promozionali',
+            'autorizza_didattico',
 
             'post_non_bagnare',
             'post_non_trucco',
@@ -195,6 +241,14 @@ class ConsensoController extends Controller
 
                 $service = app(
                     \App\Services\PdfLavoroPreesistenteService::class
+                );
+
+                break;
+
+            case 'modella':
+
+                $service = app(
+                    \App\Services\PdfModellaService::class
                 );
 
                 break;
@@ -331,6 +385,14 @@ class ConsensoController extends Controller
 
                 $service = app(
                     \App\Services\PdfLavoroPreesistenteService::class
+                );
+
+                break;
+
+            case 'modella':
+
+                $service = app(
+                    \App\Services\PdfModellaService::class
                 );
 
                 break;
